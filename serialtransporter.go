@@ -58,11 +58,9 @@ func (mb *dlt645SerialTransporter) Send(aduRequest []byte) (aduResponse []byte, 
 }
 
 func (mb *dlt645SerialTransporter) Open() (err error) {
-	err = mb.Connect()
-	return
+	return mb.Connect()
 }
 
 func (mb *dlt645SerialTransporter) Close() (err error) {
-	err = mb.serialPort.Close()
-	return
+	return mb.serialPort.Close()
 }

@@ -64,6 +64,11 @@ func (c *Dlt645Client) Send(pduSource any) (results []byte, err error) {
 	return
 }
 
+func (c *Dlt645Client) Open() (err error) {
+	err = c.transporter.Open()
+	return
+}
+
 func (c *Dlt645Client) Close() (err error) {
 	err = c.transporter.Close()
 	return
