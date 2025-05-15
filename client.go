@@ -1,69 +1,24 @@
 package dlt645
 
-import "strings"
+import "errors"
 
-// ClientHandler is the interface that groups the Packager and Transporter methods.
-type ClientHandler interface {
-	Packager
-	Transporter
-}
-
-type client struct {
-	packager    Packager
-	transporter Transporter
+type Dlt645Client struct {
+	packager    IPackager
+	transporter ITransporter
 }
 
-// NewClient creates a new modbus client with given backend handler.
-func NewClient(handler ClientHandler) Client {
-	return &client{packager: handler, transporter: handler}
+// NewClient 创建一个新的客户端
+func NewClient(handler IClientHandler) *Dlt645Client {
+	return &Dlt645Client{packager: handler, transporter: handler}
 }
 
-// NewClient2 creates a new modbus client with given backend packager and transporter.
-func NewClient2(packager Packager, transporter Transporter) Client {
-	return &client{packager: packager, transporter: transporter}
-}
-
-func (mb *client) ReadAddr() (results string, err error) {
-	pdu := NewCommonProtocolDataUnit("AAAAAAAAAAAA", "13", "")
-	res, err := mb.send(&pdu)
-	if err != nil {
-		return
-	}
-	data, err := res.Result(pdu.C)
-	if err != nil {
-		return
-	}
-	results = Byte2Hex(ByteRev(data))
-	return
-}
-
-func (mb *client) SetAddr(addr string) (err error) {
-	pdu := NewCommonProtocolDataUnit2(Hex2Byte("AAAAAAAAAAAA"), 0x15, ByteRev(Hex2Byte(addr)))
-	res, err := mb.send(&pdu)
-	if err != nil {
-		return
-	}
-	_, err = res.Result(pdu.C)
-	if err != nil {
-		return
-	}
-	return
-}
-func (mb *client) ReadData(addr string, id string) (results []byte, err error) {
-	pdu := NewCommonProtocolDataUnit2(ByteRev(Hex2Byte(addr)), 0x11, ByteRev(Hex2Byte(id)))
-	res, err := mb.send(&pdu)
-	if err != nil {
-		return
-	}
-	results, err = res.Result(pdu.C)
-	if err != nil {
-		return
-	}
-	return
-}
-func (mb *client) SetData(addr string, id string, c byte, data []byte) (results []byte, err error) {
-	pdu := NewCommonProtocolDataUnit2(ByteRev(Hex2Byte(addr)), c, append(ByteRev(Hex2Byte(id)), data...))
-	res, err := mb.send(&pdu)
+// 读取数据 addr-地址 id-数据标识符
+func (c *Dlt645Client) ReadData(addr string, id string) (results []byte, err error) {
+	pdu := NewCommonProtocolDataUnitByBytes(
+		String2BcdBytes(addr), 0x11,
+		BytesReverse(String2BcdBytes(id)),
+	)
+	res, err := c.send(pdu)
 	if err != nil {
 		return
 	}
@@ -74,11 +29,13 @@ func (mb *client) SetData(addr string, id string, c byte, data []byte) (results 
 	return
 }
 
-func (mb *client) SendHex(hex string) (results []byte, err error) {
-	hex = strings.ReplaceAll(hex, " ", "")
-	pdu1 := NewProtocolDataUnit(Hex2Byte(hex))
-	pdu := NewCommonProtocolDataUnit2(ByteRev(pdu1.Address), pdu1.C, pdu1.Data)
-	res, err := mb.send(&pdu)
+// 设置参数 addr-地址 id-数据标识符 data-数据(未加33H)
+func (c *Dlt645Client) SetParam(addr string, id string, data []byte) (results []byte, err error) {
+	pdu := NewCommonProtocolDataUnitByBytes(
+		String2BcdBytes(addr), 0x14,
+		append(BytesReverse(String2BcdBytes(id)), data...),
+	)
+	res, err := c.send(pdu)
 	if err != nil {
 		return
 	}
@@ -88,29 +45,42 @@ func (mb *client) SendHex(hex string) (results []byte, err error) {
 	}
 	return
 }
-func (mb *client) Open() (err error) {
-	err = mb.transporter.Open()
+
+// 发送自定义pdu
+func (c *Dlt645Client) Send(pduSource any) (results []byte, err error) {
+	pdu, ok := pduSource.(*Protocol2007DataUnit)
+	if !ok {
+		return nil, errors.New("invalid Protocol2007DataUnit")
+	}
+
+	res, err := c.send(pdu)
+	if err != nil {
+		return
+	}
+	results, err = res.Result(pdu.C)
+	if err != nil {
+		return
+	}
 	return
 }
-func (mb *client) Close() (err error) {
-	err = mb.transporter.Close()
+
+func (c *Dlt645Client) Close() (err error) {
+	err = c.transporter.Close()
 	return
 }
-func (mb *client) send(request *ProtocolDataUnit) (response *ProtocolDataUnit, err error) {
-	aduRequest, err := mb.packager.Encode(request)
+
+func (c *Dlt645Client) send(request *Protocol2007DataUnit) (response IPortocolDataUnit, err error) {
+	aduRequest, err := c.packager.Encode(request)
 	if err != nil {
 		return
 	}
-	aduResponse, err := mb.transporter.Send(aduRequest)
+	aduResponse, err := c.transporter.Send(aduRequest)
 	if err != nil {
 		return
 	}
-	if err = mb.packager.Verify(aduRequest, aduResponse); err != nil {
-		return
-	}
-	response, err = mb.packager.Decode(aduResponse)
+	pdu, err := c.packager.Decode(aduResponse)
 	if err != nil {
 		return
 	}
-	return
+	return pdu, nil
 }

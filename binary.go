@@ -5,7 +5,8 @@ import (
 	"strconv"
 )
 
-func Hex2Byte(str string) []byte {
+// 字符串转BCD字节
+func String2BcdBytes(str string) []byte {
 	slen := len(str)
 	bHex := make([]byte, len(str)/2)
 	ii := 0
@@ -20,7 +21,9 @@ func Hex2Byte(str string) []byte {
 	}
 	return bHex
 }
-func Byte2Hex(bs []byte) string {
+
+// BCD字节转字符串
+func BcdBytes2String(bs []byte) string {
 	s := ""
 	for _, b := range bs {
 		s += fmt.Sprintf("%02x", b)
@@ -28,14 +31,17 @@ func Byte2Hex(bs []byte) string {
 	return s
 }
 
-func ByteSub(bs []byte, sub byte) []byte {
+// 字节切片全部减小
+func BytesSub(bs []byte, sub byte) []byte {
 	r := []byte{}
 	for _, b := range bs {
 		r = append(r, b-sub)
 	}
 	return r
 }
-func ByteAdd(bs []byte, add byte) []byte {
+
+// 字节切片全部增加
+func BytesAdd(bs []byte, add byte) []byte {
 	r := []byte{}
 	for _, b := range bs {
 		r = append(r, b+add)
@@ -43,8 +49,8 @@ func ByteAdd(bs []byte, add byte) []byte {
 	return r
 }
 
-// 反转 byte
-func ByteRev(bs []byte) []byte {
+// 反转字节切片
+func BytesReverse(bs []byte) []byte {
 	r := make([]byte, len(bs))
 	for i, b := range bs {
 		r[len(bs)-i-1] = b
