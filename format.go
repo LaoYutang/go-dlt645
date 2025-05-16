@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// 压缩BCD码解析成float64 bcd-小字序BCD字节 format-格式"XXX.XXX"
-func BcdBytes2Float64(bcd []byte, format string) (float64, error) {
+// 压缩BCD码解析成float64 bcd-小字序BCD字节 format-格式"XXX.XXX" allowNegative-是否需要处理负号
+func BcdBytes2Float64(bcd []byte, format string, allowNegative bool) (float64, error) {
 	// 判断format中"X"数量与bcd是否一致
 	xCount := strings.Count(format, "X")
 	if xCount != len(bcd)*2 {
@@ -18,8 +18,11 @@ func BcdBytes2Float64(bcd []byte, format string) (float64, error) {
 	// 将BCD中的小字序字节转为大字序字节
 	bcd = BytesReverse(bcd)
 	// 判断是否为负数
-	isNegative := bcd[0]&0x80 > 0
-	bcd[0] = bcd[0] & 0x7F
+	var isNegative bool
+	if allowNegative {
+		isNegative = bcd[0]&0x80 > 0
+		bcd[0] = bcd[0] & 0x7F
+	}
 
 	// bcd转换成字符串
 	bcdString := ""
