@@ -18,9 +18,9 @@ func TestString2BcdBytes(t *testing.T) {
 		{"", []byte{}},
 		{"987654", []byte{0x98, 0x76, 0x54}},
 		{"0001", []byte{0x00, 0x01}},
-		{"a2", []byte{0x92}},
-		{"9b", []byte{0x99}},
-		{"!", []byte{0x09}},
+		{"a2", []byte{0xa2}},
+		{"9b", []byte{0x9b}},
+		{"1!", []byte{0x10}},
 	}
 
 	for _, tt := range tests {
@@ -51,6 +51,12 @@ func TestBcdBytes2String(t *testing.T) {
 		if got != tt.expected {
 			t.Errorf("BcdBytes2String2(%#v) = %q, want %q", tt.input, got, tt.expected)
 		}
+	}
+}
+
+func BenchmarkBcdBytes2String(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		dlt645.BcdBytes2String([]byte{0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0})
 	}
 }
 

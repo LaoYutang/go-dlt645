@@ -4,7 +4,7 @@ import (
 	"math"
 )
 
-// 压缩BCD码解析成float64 bcd-小字序BCD字节 format-格式"XXX.XXX" allowNegative-是否需要处理负号
+// 压缩BCD码解析成float64 bcd-小字序BCD字节 digit-小数位数 allowNegative-是否需要处理负号
 func BcdBytes2Float64(data []byte, digit uint8, allowNegative bool) (result float64) {
 	for i, value := range data {
 		if allowNegative && i == len(data)-1 {
