@@ -1,12 +1,22 @@
 package dlt645
 
-import (
-	"fmt"
-	"strconv"
-)
+import "strconv"
 
 // 字符串转BCD字节
 func String2BcdBytes(str string) []byte {
+	if len(str)&1 == 1 {
+		str = "0" + str
+	}
+	res := make([]byte, 0, len(str)/2)
+	for i := 0; i < len(str); i += 2 {
+		high := min(str[i]-'0', 9)
+		low := min(str[i+1]-'0', 9)
+		res = append(res, high<<4|low)
+	}
+	return res
+}
+
+func String2BcdBytes2(str string) []byte {
 	slen := len(str)
 	bHex := make([]byte, len(str)/2)
 	ii := 0
@@ -24,11 +34,18 @@ func String2BcdBytes(str string) []byte {
 
 // BCD字节转字符串
 func BcdBytes2String(bs []byte) string {
-	s := ""
-	for _, b := range bs {
-		s += fmt.Sprintf("%02x", b)
+	if len(bs) == 0 {
+		return ""
 	}
-	return s
+
+	result := make([]byte, len(bs)*2)
+	const hexChars = "0123456789abcdef"
+
+	for i, b := range bs {
+		result[i*2] = hexChars[b>>4]
+		result[i*2+1] = hexChars[b&0x0f]
+	}
+	return string(result)
 }
 
 // 字节切片全部减小
