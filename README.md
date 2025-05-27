@@ -9,7 +9,7 @@ DLT645客户端(主站)的golang实现
 ## 快速开始
 ```go
 // 创建串口2007客户端
-hhandler := dlt645.NewSerial2007Handler("COM13")
+handler := dlt645.NewSerial2007Handler("COM13")
 handler.Baud = 2400
 handler.StopBits = 1
 handler.Parity = serial.ParityEven
@@ -19,8 +19,12 @@ handler.Logger = log.New(os.Stdout, "rs485: ", log.LstdFlags)
 client := dlt645.NewClient(handler)
 // 读取数据
 r, err := client.ReadData("000000000010", "02020100")
+result := dlt645.BcdBytes2Float64(r[4:], 3, false)
 // 设置数据
-r, err := client.SetParam("000000000010", "04000104", []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01})
+r, err := client.SetParam(
+  "000000000010", "04000104",
+  []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, // 密码、用户代码、数据需要自行反序
+)
 // 自定义发送
 pdu := dlt645.NewCommonProtocolDataUnitByBytes(
   []byte{0x99, 0x99, 0x99, 0x99, 0x99, 0x99}, 0x13,
